@@ -1,0 +1,15 @@
+channels:
+  - bioconda
+  - conda-forge
+dependencies:
+  - snakemake =5.3.0
+  - python =3.6
+  - jinja2 =2.10
+  - networkx =2.1
+  - matplotlib
+  - graphviz =2.38.0
+  - bcftools =1.9
+  - samtools =1.9
+  - bwa =0.7.17
+  - pysam =0.15.0
+  - megahit =1.1.3
