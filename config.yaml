@@ -1,10 +1,7 @@
 
 study_accession: PRJEB4352
-input_ena_table: input/ENA-tables/PRJEB4352_metaG_wenv_PE.txt 
-outputDIR: /vortexfs1/omics/alexander/data/TARA 
-scratch:  /vortexfs1/scratch/halexander
-rerun-incomplete: True
-keep-going: True
-latency-wait: 10
-max-jobs-per-second: 1
-restart-times: 2
+input_ena_table: /vortexfs1/omics/alexander/data/TARA/test_data/test_PRJEB4352.txt
+inputDIR: /vortexfs1/omics/alexander/data/TARA/test_data
+outputDIR: /vortexfs1/omics/alexander/data/TARA/test_data/output
+scratch:  /vortexfs1/scratch/sarahhu
+adapters: #
