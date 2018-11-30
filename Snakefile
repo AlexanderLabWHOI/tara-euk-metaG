@@ -34,15 +34,38 @@ pathlib.Path(OUTPUTDIR).mkdir(parents=True, exist_ok=True)
 
 #----DEFINE RULES----#
 
-localrules: make_directories, md5sum, move_fastq1, move_fastq2
+localrules: multiqc 
 
 rule all: 
-    input: 
-	    OUTPUTDIR + '/qc/multiqc.html'
+    input:
+        multiQC = OUTPUTDIR + '/qc/multiqc.html', 
+        fastqcHTML = expand("{base}/qc/fastqc/{sample}_{num}.html", base = OUTPUTDIR, sample=run_accession, num = [1,2])
 
+rule fastqc:
+    input:
+        expand( "{base}/{sample}/{sample}_{num}.fastq.gz", base=INPUTDIR, sample=run_accession, num = [1,2]) 
+    output:
+        #html = expand("{base}/qc/fastqc/{sample}_{num}.html", sample= run_accession, num=[1,2], base=OUTPUTDIR), 
+        #zip =   expand("{base}/qc/fastqc/{sample}_{num}.zip", sample= run_accession, num=[1,2], base=OUTPUTDIR), 
+        html = OUTPUTDIR + '/qc/fastqc/{sample}_{num}.html'
+    params: ""
+    log:
+        #expand("{base}/qc/fastqc/log/{sample}_{num}.log", sample= run_accession, num=[1,2], base=OUTPUTDIR) 
+        OUTPUTDIR + '/qc/fastqc/{sample}_{num}.log'
+    wrapper:
+        "0.27.1/bio/fastqc"
+
+rule make_multiQC: 
+    input: 
+        html = expand("{base}/qc/fastqc/{sample}_{num}.html", sample= run_accession, num=[1,2], base=OUTPUTDIR),  
+    output: 
+        OUTPUTDIR+'/qc/filelist.txt'
+    shell: """
+        echo "{OUTPUTDIR}/qc/fastqc/"> {OUTPUTDIR}/qc/filelist.txt
+        """ 
 rule multiqc:
     input:
-	    "input/multi_QC_tmp.txt"
+        OUTPUTDIR + '/qc/filelist.txt'    
     output:
         OUTPUTDIR + '/qc/multiqc.html'
     params:
