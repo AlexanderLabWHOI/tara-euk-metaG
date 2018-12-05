@@ -44,24 +44,30 @@ rule fastqc:
     wrapper:
         "0.27.1/bio/fastqc"
 
-rule make_multiQC: 
-    input: 
-        html = expand("{base}/qc/fastqc/{sample}_{num}.html", sample= run_accession, num=[1,2], base=OUTPUTDIR),  
-    output: 
-        OUTPUTDIR+'/qc/filelist.txt'
-    shell: """
-        echo "{OUTPUTDIR}/qc/fastqc/"> {OUTPUTDIR}/qc/filelist.txt
-        """ 
-rule multiqc:
-    input:
-        expand("{base}/qc/fastqc/{sample}_{num}.zip", base = OUTPUTDIR, sample = run_accession, num = [1,2])
-    output:
-        report = OUTPUTDIR + '/qc/multiqc.html'
-    params:
-        qc_dir = OUTPUTDIR + '/qc/fastqc/' # Optional: extra parameters for multiqc.
-    log:
-	    OUTPUTDIR + '/logs/multiqc.log'
-    shell: 
-        """
-        multiqc -f -o {OUTPUTDIR}/qc/multiqc.html {params.qc_dir} 2> {log} 1>&2  
-        """
+#rule make_multiQC: 
+#    input: 
+#        html = expand("{base}/qc/fastqc/{sample}_{num}.html", sample= run_accession, num=[1,2], base=OUTPUTDIR),  
+#    output: 
+#        OUTPUTDIR+'/qc/filelist.txt'
+#    shell: """
+#        echo "{OUTPUTDIR}/qc/fastqc/"> {OUTPUTDIR}/qc/filelist.txt
+#        """ 
+#rule multiqc:
+#    input:
+#        expand("{base}/qc/fastqc/{sample}_{num}.zip", base = OUTPUTDIR, sample = run_accession, num = [1,2])
+#    output:
+#        html = OUTPUTDIR + "/qc/multiqc.html", 
+#        stats = OUTPUTDIR + "/qc/multiqc_general_stats.txt"
+#    conda: 
+#        "envs/multiqc-env.yaml"
+#    shell: 
+#        ""
+#        # Run multiQC and keep the html report
+#        multiqc -n multiqc.html {input}
+#        mv multiqc.html {output.html}
+#        mv multiqc_data/multiqc_general_stats.txt {output.stats}
+#
+#        # Remove the other directory that multiQC creates
+#        rm -rf multiqc_data
+#        """
+
