@@ -29,47 +29,37 @@ localrules: multiqc
 
 rule all: 
     input:
-#        multiQC = OUTPUTDIR + '/qc/multiqc.html', 
-        fastqcHTML = expand("{base}/qc/fastqc/{sample}_{num}.html", base = OUTPUTDIR, sample=run_accession, num = [1,2]), 
+        fastqcZIP = expand("{base}/qc/fastqc/{sample}_{num}_fastqc.zip", base = OUTPUTDIR, sample=run_accession, num = [1,2]), 
+        multiQC = OUTPUTDIR + '/qc/multiqc.html', 
         trimmedData = expand("{base}/trimmed/{sample}_{num}.trimmed.fastq.gz", base = OUTPUTDIR, sample=run_accession, num = [1,2])
+
 rule fastqc:
     input:
-        expand( "{base}/{sample}/{sample}_{num}.fastq.gz", base=INPUTDIR, sample=run_accession, num = [1,2]) 
+        INPUTDIR + "/{sample}/{sample}_{num}.fastq.gz" 
     output:
-        html = OUTPUTDIR + '/qc/fastqc/{sample}_{num}.html', 
-        zip = OUTPUTDIR + '/qc/fastqc/{sample}_{num}.zip'
+        html = OUTPUTDIR + '/qc/fastqc/{sample}_{num}_fastqc.html', 
+        zip = OUTPUTDIR + '/qc/fastqc/{sample}_{num}_fastqc.zip'
     params: ""
     log: 
         OUTPUTDIR + '/logs/fastqc/{sample}_{num}.log'
     wrapper:
         "0.27.1/bio/fastqc"
 
-#rule make_multiQC: 
-#    input: 
-#        html = expand("{base}/qc/fastqc/{sample}_{num}.html", sample= run_accession, num=[1,2], base=OUTPUTDIR),  
-#    output: 
-#        OUTPUTDIR+'/qc/filelist.txt'
-#    shell: """
-#        echo "{OUTPUTDIR}/qc/fastqc/"> {OUTPUTDIR}/qc/filelist.txt
-#        """ 
-#rule multiqc:
-#    input:
-#        expand("{base}/qc/fastqc/{sample}_{num}.zip", base = OUTPUTDIR, sample = run_accession, num = [1,2])
-#    output:
-#        html = OUTPUTDIR + "/qc/multiqc.html", 
-#        stats = OUTPUTDIR + "/qc/multiqc_general_stats.txt"
-#    conda: 
-#        "envs/multiqc-env.yaml"
-#    shell: 
-#        ""
-#        # Run multiQC and keep the html report
-#        multiqc -n multiqc.html {input}
-#        mv multiqc.html {output.html}
-#        mv multiqc_data/multiqc_general_stats.txt {output.stats}
-#
-#        # Remove the other directory that multiQC creates
-#        rm -rf multiqc_data
-#        """
+rule multiqc:
+    input:
+        expand("{base}/qc/fastqc/{sample}_{num}_fastqc.zip", base = OUTPUTDIR, sample = run_accession, num = [1,2])
+    output:
+        html = OUTPUTDIR + "/qc/multiqc.html", 
+        stats = OUTPUTDIR + "/qc/multiqc_general_stats.txt"
+    conda: 
+        "envs/multiqc-env.yaml"
+    shell: 
+        """
+        multiqc -n multiqc.html {input}
+        mv multiqc.html {output.html}
+        mv multiqc_data/multiqc_general_stats.txt {output.stats} 
+        rm -rf multiqc_data
+        """
 
 rule trimmomatic: 
     input:
@@ -85,9 +75,7 @@ rule trimmomatic:
         OUTPUTDIR +  "/logs/trimmomatic/{sample}.log"
     params:
         # UPDATE TRIMMING DETAILS -- SH 
-        trimmer=[ "LEADING:2 TRAILING:2 \
-                SLIDINGWINDOW:4:2 \
-                MINLEN:25"],
+        trimmer=[ "LEADING:20 MINLEN:25"],
         # EXTRA FLAGS? 
         extra=""
     wrapper:
