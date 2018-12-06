@@ -29,13 +29,17 @@ localrules: multiqc
 
 rule all: 
     input:
-        fastqcZIP = expand("{base}/qc/fastqc/{sample}_{num}_fastqc.zip", base = OUTPUTDIR, sample=run_accession, num = [1,2]), 
-        multiQC = OUTPUTDIR + '/qc/multiqc.html', 
+        # QC DATA
+        fastqcZIP_raw = expand("{base}/qc/fastqc/{sample}_{num}_fastqc.zip", base = OUTPUTDIR, sample=run_accession, num = [1,2]), 
+        fastqcZIP_trimmed = expand("{base}/qc/fastqc/{sample}_{num}.trimmed_fastqc.zip", base = OUTPUTDIR, sample=run_accession, num = [1,2]), 
+        multiQC_raw = OUTPUTDIR + '/qc/raw_multiqc.html', 
+        multiQC_trimmed = OUTPUTDIR + '/qc/trimmed_multiqc.html', 
+        #TRIM DATA
         trimmedData = expand("{base}/trimmed/{sample}_{num}.trimmed.fastq.gz", base = OUTPUTDIR, sample=run_accession, num = [1,2])
 
 rule fastqc:
     input:
-        INPUTDIR + "/{sample}/{sample}_{num}.fastq.gz" 
+        INPUTDIR + "/{sample}/{sample}_{num}.fastq.gz"     
     output:
         html = OUTPUTDIR + '/qc/fastqc/{sample}_{num}_fastqc.html', 
         zip = OUTPUTDIR + '/qc/fastqc/{sample}_{num}_fastqc.zip'
@@ -44,22 +48,6 @@ rule fastqc:
         OUTPUTDIR + '/logs/fastqc/{sample}_{num}.log'
     wrapper:
         "0.27.1/bio/fastqc"
-
-rule multiqc:
-    input:
-        expand("{base}/qc/fastqc/{sample}_{num}_fastqc.zip", base = OUTPUTDIR, sample = run_accession, num = [1,2])
-    output:
-        html = OUTPUTDIR + "/qc/multiqc.html", 
-        stats = OUTPUTDIR + "/qc/multiqc_general_stats.txt"
-    conda: 
-        "envs/multiqc-env.yaml"
-    shell: 
-        """
-        multiqc -n multiqc.html {input}
-        mv multiqc.html {output.html}
-        mv multiqc_data/multiqc_general_stats.txt {output.stats} 
-        rm -rf multiqc_data
-        """
 
 rule trimmomatic: 
     input:
@@ -79,4 +67,40 @@ rule trimmomatic:
         # EXTRA FLAGS? 
         extra=""
     wrapper:
-        "0.27.1/bio/trimmomatic/pe" 
+        "0.27.1/bio/trimmomatic/pe"
+ 
+rule fastqc_trimmed:
+    input:
+        OUTPUTDIR + "/trimmed/{sample}_{num}.trimmed.fastq.gz" 
+    output:
+        html = OUTPUTDIR + '/qc/fastqc/{sample}_{num}.trimmed_fastqc.html', 
+        zip = OUTPUTDIR + '/qc/fastqc/{sample}_{num}.trimmed_fastqc.zip'
+    params: ""
+    log: 
+        OUTPUTDIR + '/logs/fastqc/{sample}_{num}.trimmed.log'
+    wrapper:
+        "0.27.1/bio/fastqc"
+
+rule multiqc:
+    input:
+        raw = expand("{base}/qc/fastqc/{sample}_{num}_fastqc.zip", base = OUTPUTDIR, sample = run_accession, num = [1,2]), 
+        trimmed = expand("{base}/qc/fastqc/{sample}_{num}.trimmed_fastqc.zip", base = OUTPUTDIR, sample = run_accession, num = [1,2]) 
+    output:
+        html_raw = OUTPUTDIR + "/qc/raw_multiqc.html", 
+        stats_raw = OUTPUTDIR + "/qc/raw_multiqc_general_stats.txt",
+        html_trimmed = OUTPUTDIR + "/qc/trimmed_multiqc.html", 
+        stats_trimmed = OUTPUTDIR + "/qc/trimmed_multiqc_general_stats.txt"
+    conda: 
+        "envs/multiqc-env.yaml"
+    shell: 
+        """
+        multiqc -n multiqc.html {input.raw}
+        mv multiqc.html {output.html_raw}
+        mv multiqc_data/multiqc_general_stats.txt {output.stats_raw} 
+        rm -rf multiqc_data
+
+        multiqc -n multiqc.html {input.trimmed}
+        mv multiqc.html {output.html_trimmed}
+        mv multiqc_data/multiqc_general_stats.txt {output.stats_trimmed} 
+        rm -rf multiqc_data
+        """
