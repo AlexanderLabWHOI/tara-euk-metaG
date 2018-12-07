@@ -112,18 +112,23 @@ rule normalized_samples:
         r2 = OUTPUTDIR + "/trimmed/{sample}_2.trimmed.fastq.gz"
     output: 
         r1 = OUTPUTDIR + "/normalized/{sample}_1.trimmed.normalized.fastq.gz",
-        r2 = OUTPUTDIR + "/normalized/{sample}_2.trimmed.normalized.fastq.gz"
+        r2 = OUTPUTDIR + "/normalized/{sample}_2.trimmed.normalized.fastq.gz", 
+        inhist = OUTPUTDIR + "/normalized/{sample}.inhist",
+        outhist = OUTPUTDIR + "/normalized/{sample}.outhist",
     params: 
-        tmpFile= OUTPUTDIR + "/normalized/{sample}_clean.tmp.fq",
+        bb_targetDepth = 30, 
+        bb_minDepth = 2,  
+        bb_otherparams = "", 
+        bb_threads = "", 
         r1 = OUTPUTDIR + "/normalized/{sample}_1.trimmed.normalized.fastq",
         r2 = OUTPUTDIR + "/normalized/{sample}_2.trimmed.normalized.fastq",
     conda: 
         'envs/bbmap-env.yaml'
     shell: 
         """ 
-        bbnorm.sh in1={input.r1} in2={input.r2} out={params.tmpFile} target=100 min=3 
-        reformat.sh in={params.tmpFile} out1={params.r1} out2={params.r2}
+        bbnorm.sh in1={input.r1} in2={input.r2} out={params.r1} out2={params.r2} target={params.bb_targetDepth} min={params.bb_minDepth} hist={output.inhist} histout={output.outhist} {params.bb_otherparams} 
         pigz {params.r1}
         pigz {params.r2}
-        rm {params.tmpFile}
         """
+
+
