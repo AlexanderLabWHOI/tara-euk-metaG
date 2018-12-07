@@ -125,4 +125,5 @@ rule normalized_samples:
         reformat.sh in={params.tmpFile} out1={params.r1} out2={params.r2}
         pigz {params.r1}
         pigz {params.r2}
+        rm {params.tmpFile}
         """
