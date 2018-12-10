@@ -35,7 +35,9 @@ rule all:
         multiQC_raw = OUTPUTDIR + '/qc/raw_multiqc.html', 
         multiQC_trimmed = OUTPUTDIR + '/qc/trimmed_multiqc.html', 
         #TRIM DATA
-        trimmedData = expand("{base}/trimmed/{sample}_{num}.trimmed.fastq.gz", base = OUTPUTDIR, sample=run_accession, num = [1,2])
+        trimmedData = expand("{base}/trimmed/{sample}_{num}.trimmed.fastq.gz", base = OUTPUTDIR, sample=run_accession, num = [1,2]), 
+        #NORMALIZE DATA
+        normalizedData = expand("{base}/normalized/{sample}_{num}.trimmed.normalized.fastq.gz", base= OUTPUTDIR, sample = run_accession, num=[1,2]),
 
 rule fastqc:
     input:
@@ -102,4 +104,28 @@ rule multiqc:
         mv multiqc.html {output.html_trimmed}
         mv multiqc_data/multiqc_general_stats.txt {output.stats_trimmed} 
         rm -rf multiqc_data
+        """
+rule normalized_samples: 
+    input: 
+        r1 = OUTPUTDIR + "/trimmed/{sample}_1.trimmed.fastq.gz",   
+        r2 = OUTPUTDIR + "/trimmed/{sample}_2.trimmed.fastq.gz"
+    output: 
+        r1 = OUTPUTDIR + "/normalized/{sample}_1.trimmed.normalized.fastq.gz",
+        r2 = OUTPUTDIR + "/normalized/{sample}_2.trimmed.normalized.fastq.gz", 
+        inhist = OUTPUTDIR + "/normalized/{sample}.inhist",
+        outhist = OUTPUTDIR + "/normalized/{sample}.outhist",
+    params: 
+        bb_targetDepth = 30, 
+        bb_minDepth = 2,  
+        bb_otherparams = "", 
+        bb_threads = "", 
+        r1 = OUTPUTDIR + "/normalized/{sample}_1.trimmed.normalized.fastq",
+        r2 = OUTPUTDIR + "/normalized/{sample}_2.trimmed.normalized.fastq",
+    conda: 
+        'envs/bbmap-env.yaml'
+    shell: 
+        """ 
+        bbnorm.sh in1={input.r1} in2={input.r2} out={params.r1} out2={params.r2} target={params.bb_targetDepth} min={params.bb_minDepth} hist={output.inhist} histout={output.outhist} {params.bb_otherparams} 
+        pigz {params.r1}
+        pigz {params.r2}
         """
