@@ -4,4 +4,4 @@ input_ena_table: /vortexfs1/omics/alexander/data/TARA/test_data/test_PRJEB4352.t
 inputDIR: /vortexfs1/omics/alexander/data/TARA/test_data
 outputDIR: /vortexfs1/omics/alexander/data/TARA/test_data/output
 scratch:  /vortexfs1/scratch/sarahhu
-adapters: #
+adapters: /vortexfs1/omics/alexander/shu/tara-euk-metaG/illumina-adapters.fa
