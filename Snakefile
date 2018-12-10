@@ -38,6 +38,7 @@ rule all:
         trimmedData = expand("{base}/trimmed/{sample}_{num}.trimmed.fastq.gz", base = OUTPUTDIR, sample=run_accession, num = [1,2]), 
         #NORMALIZE DATA
         normalizedData = expand("{base}/normalized/{sample}_{num}.trimmed.normalized.fastq.gz", base= OUTPUTDIR, sample = run_accession, num=[1,2]),
+
 rule fastqc:
     input:
         INPUTDIR + "/{sample}/{sample}_{num}.fastq.gz"     
@@ -104,7 +105,6 @@ rule multiqc:
         mv multiqc_data/multiqc_general_stats.txt {output.stats_trimmed} 
         rm -rf multiqc_data
         """
-
 rule normalized_samples: 
     input: 
         r1 = OUTPUTDIR + "/trimmed/{sample}_1.trimmed.fastq.gz",   
@@ -129,5 +129,3 @@ rule normalized_samples:
         pigz {params.r1}
         pigz {params.r2}
         """
-
-
