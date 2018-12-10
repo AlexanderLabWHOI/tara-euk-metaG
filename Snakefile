@@ -85,9 +85,8 @@ rule trimmomatic:
         OUTPUTDIR +  "/logs/trimmomatic/{sample}.log"
     params:
         # UPDATE TRIMMING DETAILS -- SH 
-        trimmer=[ "LEADING:2 TRAILING:2 \
-                SLIDINGWINDOW:4:2 \
-                MINLEN:25"],
+        trimmer=[ "ILLUMINACLIP:ADAPTERS:2:30:7 LEADING:2 TRAILING:2 \
+                SLIDINGWINDOW:4:2 MINLEN:50"],
         # EXTRA FLAGS? 
         extra=""
     wrapper:
