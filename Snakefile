@@ -36,6 +36,7 @@ rule all:
         multiQC_trimmed = OUTPUTDIR + '/qc/trimmed_multiqc.html', 
         #TRIM DATA
         trimmedData = expand("{base}/trimmed/{sample}_{num}.trimmed.fastq.gz", base = OUTPUTDIR, sample=run_accession, num = [1,2]), 
+        errtrimmedData = expand("{base}/normalized/{sample}_{num}.trimmed.errtrim.fastq.gz", base = OUTPUTDIR, sample=run_accession, num = [1,2]),
         #NORMALIZE DATA
         normalizedData = expand("{base}/normalized/{sample}_{num}.trimmed.normalized.fastq.gz", base= OUTPUTDIR, sample = run_accession, num=[1,2]),
 
@@ -128,4 +129,55 @@ rule normalized_samples:
         bbnorm.sh in1={input.r1} in2={input.r2} out={params.r1} out2={params.r2} target={params.bb_targetDepth} min={params.bb_minDepth} hist={output.inhist} histout={output.outhist} {params.bb_otherparams} 
         pigz {params.r1}
         pigz {params.r2}
+        """
+
+
+rule interleave_reads:
+    input: 
+        r1 =  OUTPUTDIR + "/trimmed/{sample}_1.trimmed.fastq.gz", 
+        r2 = OUTPUTDIR + "/trimmed/{sample}_2.trimmed.fastq.gz"
+    output: 
+        temp(SCRATCHDIR + "/{sample}.trimmed.interleaved.fastq.gz") 
+    conda: 
+        "envs/trim_low_abund.yaml"
+    shell: 
+        '''  
+        interleave-reads.py --gzip {input.r1} {input.r2} -o {output} 
+        '''
+
+rule split_reads: 
+    input: 
+        SCRATCHDIR + "/{sample}.trimmed.interleaved.errtrim.fastq.gz",
+    output:  
+        r1 = OUTPUTDIR + "/normalized/{sample}_1.trimmed.errtrim.fastq.gz",
+        r2 = OUTPUTDIR + "/normalized/{sample}_2.trimmed.errtrim.fastq.gz",        
+        r0= OUTPUTDIR + "/normalized/{sample}_SE.trimmed.errtrim.fastq.gz",
+    params:   
+        tmp_r1 = SCRATCHDIR + "/{sample}_1.trimmed.errtrim.fastq.gz", 
+        tmp_r2 = SCRATCHDIR + "/{sample}_2.trimmed.errtrim.fastq.gz",
+        tmp_r0 = SCRATCHDIR + "/{sample}_SE.trimmed.errtrim.fastq.gz",
+    conda: 
+        'envs/trim_low_abund.yaml'
+    shell:
+        ''' 
+        split-paired-reads.py {input} --gzip -0 {params.tmp_r0} -1 {params.tmp_r1} -2 {params.tmp_r2} 
+        mv {params.tmp_r1} {output.r1}
+        mv {params.tmp_r2} {output.r2}
+        mv {params.tmp_r0} {output.r0}
+        rm {input}.log
+        '''
+
+rule trim_low_abund:
+    input:
+         SCRATCHDIR + "/{sample}.trimmed.interleaved.fastq.gz"  
+    output: 
+         temp(SCRATCHDIR +  "/{sample}.trimmed.interleaved.errtrim.fastq.gz")
+    params: 
+        memory = "20e9",  
+        other = "-C 2 -Z 18 -V -k31 --gzip -q"
+    conda: 
+        'envs/trim_low_abund.yaml'
+    shell:
+        """  
+        trim-low-abund.py -M {params.memory} {params.other} -o {output} {input} 
         """
