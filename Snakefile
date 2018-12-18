@@ -181,3 +181,18 @@ rule trim_low_abund:
         """  
         trim-low-abund.py -M {params.memory} {params.other} -o {output} {input} 
         """
+
+rule compute_sigs:
+    input: 
+        r1 = OUTPUTDIR + "/normalized/{sample}_1.trimmed.errtrim.fastq.gz",        
+        r2 = OUTPUTDIR + "/normalized/{sample}_2.trimmed.errtrim.fastq.gz",    output: 
+        OUTPUTDIR + "/sourmash/{sample}.1k.sig"
+    conda: 
+        "envs/sourmash.yaml"
+    shell: 
+        """
+        zcat {input.read1} {input.read2} | sourmash compute -k 21,31,51\
+            --scaled 1000  --track-abundance \
+            -o {output}
+        """
+
