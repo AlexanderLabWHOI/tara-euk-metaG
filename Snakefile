@@ -185,7 +185,8 @@ rule trim_low_abund:
 rule compute_sigs:
     input: 
         r1 = OUTPUTDIR + "/normalized/{sample}_1.trimmed.errtrim.fastq.gz",        
-        r2 = OUTPUTDIR + "/normalized/{sample}_2.trimmed.errtrim.fastq.gz",    output: 
+        r2 = OUTPUTDIR + "/normalized/{sample}_2.trimmed.errtrim.fastq.gz",    
+    output: 
         OUTPUTDIR + "/sourmash/{sample}.1k.sig"
     conda: 
         "envs/sourmash.yaml"
