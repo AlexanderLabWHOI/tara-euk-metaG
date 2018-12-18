@@ -140,9 +140,11 @@ rule interleave_reads:
         temp(SCRATCHDIR + "/{sample}.trimmed.interleaved.fastq.gz") 
     conda: 
         "envs/trim_low_abund.yaml"
+    log: 
+         OUTPUTDIR +  "/logs/errtrim/interleave_PE_{sample}.log"
     shell: 
         '''  
-        interleave-reads.py --gzip {input.r1} {input.r2} -o {output} 
+            interleave-reads.py --gzip {input.r1} {input.r2} -o {output} 2> {log} 
         '''
 
 rule split_reads: 
@@ -158,13 +160,14 @@ rule split_reads:
         tmp_r0 = SCRATCHDIR + "/{sample}_SE.trimmed.errtrim.fastq.gz",
     conda: 
         'envs/trim_low_abund.yaml'
+    log: 
+        OUTPUTDIR +  "/logs/errtrim/split_PE_{sample}.log"
     shell:
         ''' 
-        split-paired-reads.py {input} --gzip -0 {params.tmp_r0} -1 {params.tmp_r1} -2 {params.tmp_r2} 
+        split-paired-reads.py {input} --gzip -0 {params.tmp_r0} -1 {params.tmp_r1} -2 {params.tmp_r2} 2> {log} 
         mv {params.tmp_r1} {output.r1}
         mv {params.tmp_r2} {output.r2}
-        mv {params.tmp_r0} {output.r0}
-        rm {input}.log
+        mv {params.tmp_r0} {output.r0} 
         '''
 
 rule trim_low_abund:
@@ -177,9 +180,11 @@ rule trim_low_abund:
         other = "-C 2 -Z 18 -V -k31 --gzip -q"
     conda: 
         'envs/trim_low_abund.yaml'
+    log:
+         OUTPUTDIR +  "/logs/errtrim/trim_low_abund_{sample}.log" 
     shell:
         """  
-        trim-low-abund.py -M {params.memory} {params.other} -o {output} {input} 
+        trim-low-abund.py -M {params.memory} {params.other} -o {output} {input} 2> {log} 
         """
 
 rule compute_sigs:
@@ -190,6 +195,8 @@ rule compute_sigs:
         OUTPUTDIR + "/sourmash/{sample}.1k.sig"
     conda: 
         "envs/sourmash.yaml"
+    log:
+         OUTPUTDIR +  "/logs/sourmash/sourmash_{sample}.log"
     shell: 
         """
         zcat {input.read1} {input.read2} | sourmash compute -k 21,31,51\
