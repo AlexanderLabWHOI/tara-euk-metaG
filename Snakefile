@@ -36,10 +36,12 @@ rule all:
         multiQC_trimmed = OUTPUTDIR + '/qc/trimmed_multiqc.html', 
         #TRIM DATA
         trimmedData = expand("{base}/trimmed/{sample}_{num}.trimmed.fastq.gz", base = OUTPUTDIR, sample=run_accession, num = [1,2]), 
-        errtrimmedData = expand("{base}/normalized/{sample}_{num}.trimmed.errtrim.fastq.gz", base = OUTPUTDIR, sample=run_accession, num = [1,2]),
+        errtrimmedData = expand("{base}/errtrim/{sample}_{num}.trimmed.errtrim.fastq.gz", base = OUTPUTDIR, sample=run_accession, num = [1,2]),
         #NORMALIZE DATA
         normalizedData = expand("{base}/normalized/{sample}_{num}.trimmed.normalized.fastq.gz", base= OUTPUTDIR, sample = run_accession, num=[1,2]),
-
+        #CALCULATE SOURMASH
+        signature = expand("{base}/sourmash/{sample}.1k.sig", base = OUTPUTDIR, sample = run_accession),
+ 
 rule fastqc:
     input:
         INPUTDIR + "/{sample}/{sample}_{num}.fastq.gz"     
@@ -151,9 +153,9 @@ rule split_reads:
     input: 
         SCRATCHDIR + "/{sample}.trimmed.interleaved.errtrim.fastq.gz",
     output:  
-        r1 = OUTPUTDIR + "/normalized/{sample}_1.trimmed.errtrim.fastq.gz",
-        r2 = OUTPUTDIR + "/normalized/{sample}_2.trimmed.errtrim.fastq.gz",        
-        r0= OUTPUTDIR + "/normalized/{sample}_SE.trimmed.errtrim.fastq.gz",
+        r1 = OUTPUTDIR + "/errtrim/{sample}_1.trimmed.errtrim.fastq.gz",
+        r2 = OUTPUTDIR + "/errtrim/{sample}_2.trimmed.errtrim.fastq.gz",        
+        r0= OUTPUTDIR + "/errtrim/{sample}_SE.trimmed.errtrim.fastq.gz",
     params:   
         tmp_r1 = SCRATCHDIR + "/{sample}_1.trimmed.errtrim.fastq.gz", 
         tmp_r2 = SCRATCHDIR + "/{sample}_2.trimmed.errtrim.fastq.gz",
@@ -177,7 +179,7 @@ rule trim_low_abund:
          temp(SCRATCHDIR +  "/{sample}.trimmed.interleaved.errtrim.fastq.gz")
     params: 
         memory = "20e9",  
-        other = "-C 2 -Z 18 -V -k31 --gzip -q"
+        other = "-C 2 -Z 18 -V -k31 --gzip"
     conda: 
         'envs/trim_low_abund.yaml'
     log:
@@ -189,8 +191,8 @@ rule trim_low_abund:
 
 rule compute_sigs:
     input: 
-        r1 = OUTPUTDIR + "/normalized/{sample}_1.trimmed.errtrim.fastq.gz",        
-        r2 = OUTPUTDIR + "/normalized/{sample}_2.trimmed.errtrim.fastq.gz",    
+        r1 = OUTPUTDIR + "/errtrim/{sample}_1.trimmed.errtrim.fastq.gz",
+        r2 = OUTPUTDIR + "/errtrim/{sample}_2.trimmed.errtrim.fastq.gz" 
     output: 
         OUTPUTDIR + "/sourmash/{sample}.1k.sig"
     conda: 
@@ -199,8 +201,8 @@ rule compute_sigs:
          OUTPUTDIR +  "/logs/sourmash/sourmash_{sample}.log"
     shell: 
         """
-        zcat {input.read1} {input.read2} | sourmash compute -k 21,31,51\
+        zcat {input.r1} {input.r2} | sourmash compute -k 21,31,51\
             --scaled 1000  --track-abundance \
-            -o {output}
+            -o {output} - 2> {log}
         """
 
