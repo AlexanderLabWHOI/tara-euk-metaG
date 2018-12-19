@@ -67,8 +67,7 @@ rule trimmomatic:
     log:
         OUTPUTDIR +  "/logs/trimmomatic/{sample}.log"
     params:
-        trimmer=["ILLUMINACLIP:{}:2:30:7 LEADING:2 TRAILING:2 \
-                SLIDINGWINDOW:4:2 MINLEN:50".format(ADAPTERS)],
+        trimmer=["ILLUMINACLIP:{}:2:30:7".format(ADAPTERS), "LEADING:2", "TRAILING:2", "SLIDINGWINDOW:4:2", "MINLEN:50"],
         extra=""
     wrapper:
         "0.27.1/bio/trimmomatic/pe"
@@ -126,9 +125,11 @@ rule normalized_samples:
         r2 = OUTPUTDIR + "/normalized/{sample}_2.trimmed.normalized.fastq",
     conda: 
         'envs/bbmap-env.yaml'
+    log: 
+        OUTPUTDIR + "/logs/normalized/bbnorm_{sample}.log" 
     shell: 
         """ 
-        bbnorm.sh in1={input.r1} in2={input.r2} out={params.r1} out2={params.r2} target={params.bb_targetDepth} min={params.bb_minDepth} hist={output.inhist} histout={output.outhist} {params.bb_otherparams} 
+        bbnorm.sh in1={input.r1} in2={input.r2} out={params.r1} out2={params.r2} target={params.bb_targetDepth} min={params.bb_minDepth} hist={output.inhist} histout={output.outhist} {params.bb_otherparams} 2> {log} 
         pigz {params.r1}
         pigz {params.r2}
         """
