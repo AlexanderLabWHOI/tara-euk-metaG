@@ -40,7 +40,7 @@ rule all:
         #NORMALIZE DATA
         normalizedData = expand("{base}/normalized/{sample}_{num}.trimmed.normalized.fastq.gz", base= OUTPUTDIR, sample = run_accession, num=[1,2]),
         #CALCULATE SOURMASH
-        signature = expand("{base}/sourmash/{sample}.1k.sig", base = OUTPUTDIR, sample = run_accession),
+        signature = expand("{base}/sourmash/{sample}.10k.sig", base = OUTPUTDIR, sample = run_accession),
  
 rule fastqc:
     input:
@@ -67,8 +67,8 @@ rule trimmomatic:
     log:
         OUTPUTDIR +  "/logs/trimmomatic/{sample}.log"
     params:
-        trimmer=[ "ILLUMINACLIP:ADAPTERS:2:30:7 LEADING:2 TRAILING:2 \
-                SLIDINGWINDOW:4:2 MINLEN:50"],
+        trimmer=["ILLUMINACLIP:{}:2:30:7 LEADING:2 TRAILING:2 \
+                SLIDINGWINDOW:4:2 MINLEN:50".format(ADAPTERS)],
         extra=""
     wrapper:
         "0.27.1/bio/trimmomatic/pe"
@@ -194,7 +194,7 @@ rule compute_sigs:
         r1 = OUTPUTDIR + "/errtrim/{sample}_1.trimmed.errtrim.fastq.gz",
         r2 = OUTPUTDIR + "/errtrim/{sample}_2.trimmed.errtrim.fastq.gz" 
     output: 
-        OUTPUTDIR + "/sourmash/{sample}.1k.sig"
+        OUTPUTDIR + "/sourmash/{sample}.10k.sig"
     conda: 
         "envs/sourmash.yaml"
     log:
@@ -202,7 +202,7 @@ rule compute_sigs:
     shell: 
         """
         zcat {input.r1} {input.r2} | sourmash compute -k 21,31,51\
-            --scaled 1000  --track-abundance \
+            --scaled 10000  --track-abundance \
             -o {output} - 2> {log}
         """
 
