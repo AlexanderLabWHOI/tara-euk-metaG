@@ -15,6 +15,8 @@ ADAPTERS = config["adapters"]
 STUDY = list(set(SAMPLES['study_accession'].tolist()))
 SCRATCHDIR = config["scratch"]
 OUTPUTDIR = config["outputDIR"]
+SAMPLE_LIST = pd.read_table(config["sample_list"])
+
 
 #----QC DATA FILE----#
 
