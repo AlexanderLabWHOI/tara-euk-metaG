@@ -106,3 +106,6 @@ venv.bak/
 .DS_Store
 
 .snakemake/
+
+input/pangaea_tara.zip
+input/datasets
