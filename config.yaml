@@ -6,3 +6,4 @@ outputDIR: /vortexfs1/omics/alexander/data/TARA/test_data/output
 scratch:  /vortexfs1/scratch/halexander
 adapters: input/adapters/illumina-adapters.fa    
 sample_list: input/Samplelist_forassembly.txt
+sample_sets: ["MS-all-SRF-0.8-5.00"]
