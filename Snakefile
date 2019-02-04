@@ -124,3 +124,18 @@ rule compute_sigs:
             --scaled 10000  --track-abundance \
             -o {output} - 2> {log}
         """
+
+rule megahit_assembly:
+    input: 
+    output: 
+    conda: 
+        "envs/megahit.yaml"
+    log: 
+        OUTPUTDIR + "/logs/megahit/" 
+    params: 
+        min_contig_len = "1000"
+        cpu_threads = "80" 
+    shell: 
+        """
+        megahit -1 -2 --min-contig-len {params.min_contig_len} --num-cpu-threads {params.cpu_threads}
+        """
