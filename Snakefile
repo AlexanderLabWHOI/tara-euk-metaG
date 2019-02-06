@@ -156,9 +156,10 @@ rule megahit_assembly:
         inputr1 = lambda wildcards, input: ','.join(input.r1),
         inputr2 = lambda wildcards, input: ','.join(input.r2),
         min_contig_len = "1000",
-        cpu_threads = "1",  
-        megahit_output_name = lambda wildcards: "{}".format(wildcards.assembly_group)
+        cpu_threads = "1", 
+        other_options = "--continue", 
+        megahit_output_name = lambda wildcards: "{}/megahit/{}".format(OUTPUTDIR, wildcards.assembly_group)
     shell: 
         """
-        megahit -1 {params.inputr1} -2 {params.inputr2} --min-contig-len {params.min_contig_len} --num-cpu-threads {params.cpu_threads} --out-dir {params.megahit_output_name}
+        megahit -1 {params.inputr1} -2 {params.inputr2} --min-contig-len {params.min_contig_len} --num-cpu-threads {params.cpu_threads} --out-dir {params.megahit_output_name} {params.other_options}
         """
