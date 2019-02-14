@@ -5,6 +5,9 @@ outputDIR: /vortexfs1/omics/alexander/data/TARA/test_data/output
 scratch:  /vortexfs1/scratch/halexander
 adapters: input/adapters/illumina-adapters.fa
 sample_list: input/SampleList_Test.txt
+megahit_cpu: 40
+megahit_min_contig: 1000
+megahit_mem: .9
 restart-times: 0
 max-jobs-per-second: 1
 max-status-checks-per-second: 10
