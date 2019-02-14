@@ -1,7 +1,7 @@
 __default__:
     system: 'slurm' #check if system is defined below
     account: halexander #requred
-    time: 12- # minutes
+    time: 120 # minutes
     mem: 10 # GB
     threads: 8
     queue: compute # required
@@ -17,7 +17,21 @@ __default__:
             queue: "--partition={}"
             time: "--time={}"
             nodes: "-N {}"      # ntasks: 24
-run_megahit:
-    queue: bigmem
-    time: 710
 
+trimmomatic:
+    queue: compute
+    threads: 8
+    mem: 16
+    time: 720
+
+compute_sigs:
+    queue: compute
+    mem: 4
+    time: 1400
+
+megahit_assembly:
+    queue: bigmem
+    time: 10080 
+    mem: 1000
+    threads: 80 
+    
