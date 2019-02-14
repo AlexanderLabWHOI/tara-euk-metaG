@@ -17,8 +17,11 @@ SCRATCHDIR = config["scratch"]
 OUTPUTDIR = config["outputDIR"]
 SAMPLELIST = pd.read_table(config["sample_list"], index_col='Assembly_group')
 ASSEMBLYGROUP = list(SAMPLELIST.index)
-print(ASSEMBLYGROUP)
-print(run_accession)
+MEGAHIT_CPU = config["megahit_cpu"]
+MEGAHIT_MIN_CONTIG = config["megahit_min_contig"]
+MEGAHIT_MEM = config["megahit_mem"]
+
+
 #----FUNCTIONS----#
 
 def identify_read_groups(assembly_group_name, FORWARD=True):
@@ -52,7 +55,7 @@ rule all:
         multiQC_trimmed = OUTPUTDIR + '/qc/trimmed_multiqc.html', 
         #TRIM DATA
         trimmedData = expand("{base}/trimmed/{sample}_{num}.trimmed.fastq.gz", base = OUTPUTDIR, sample=run_accession, num = [1,2]), 
-        errtrimmedData = expand("{base}/errtrim/{sample}_{num}.trimmed.errtrim.fastq.gz", base = OUTPUTDIR, sample=run_accession, num = [1,2]),
+        #errtrimmedData = expand("{base}/errtrim/{sample}_{num}.trimmed.errtrim.fastq.gz", base = OUTPUTDIR, sample=run_accession, num = [1,2]),
         # #NORMALIZE DATA
         # normalizedData = expand("{base}/normalized/{sample}_{num}.trimmed.normalized.fastq.gz", base= OUTPUTDIR, sample = run_accession, num=[1,2]),
         #CALCULATE SOURMASH
@@ -155,11 +158,20 @@ rule megahit_assembly:
     params: 
         inputr1 = lambda wildcards, input: ','.join(input.r1),
         inputr2 = lambda wildcards, input: ','.join(input.r2),
-        min_contig_len = "1000",
-        cpu_threads = "1", 
+        min_contig_len = MEGAHIT_MIN_CONTIG,
+        cpu_threads = MEGAHIT_CPU, 
+        memory = MEGAHIT_MEM, 
         other_options = "--continue", 
-        megahit_output_name = lambda wildcards: "{}/megahit/{}".format(OUTPUTDIR, wildcards.assembly_group)
+        megahit_output_name = lambda wildcards: "{}/megahit/{}".format(OUTPUTDIR, wildcards.assembly_group),
+        megahit_output_prefix = lambda wildcards: "{}".format(wildcards.assembly_group),
+       
     shell: 
         """
-        megahit -1 {params.inputr1} -2 {params.inputr2} --min-contig-len {params.min_contig_len} --num-cpu-threads {params.cpu_threads} --out-dir {params.megahit_output_name} {params.other_options}
+        megahit \
+        -1 {params.inputr1} -2 {params.inputr2} \
+        --min-contig-len {params.min_contig_len} \
+        --memory {params.memory} \ 
+        --num-cpu-threads {params.cpu_threads} \
+        --out-dir {params.megahit_output_name} \
+        {params.other_options} \ >> {log} 2>&1
         """
