@@ -15,6 +15,25 @@ ADAPTERS = config["adapters"]
 STUDY = list(set(SAMPLES['study_accession'].tolist()))
 SCRATCHDIR = config["scratch"]
 OUTPUTDIR = config["outputDIR"]
+SAMPLELIST = pd.read_table(config["sample_list"], index_col='Assembly_group')
+ASSEMBLYGROUP = list(SAMPLELIST.index)
+MEGAHIT_CPU = config["megahit_cpu"]
+MEGAHIT_MIN_CONTIG = config["megahit_min_contig"]
+MEGAHIT_MEM = config["megahit_mem"]
+
+
+#----FUNCTIONS----#
+
+def identify_read_groups(assembly_group_name, FORWARD=True):
+    outlist=[]
+    ERR_list = SAMPLELIST.loc[assembly_group_name, 'ERR_list'].split(', ')
+    if FORWARD: 
+        num = 1
+    else: 
+        num = 2
+    for E in ERR_list: 
+        outlist.append(OUTPUTDIR + "/trimmed/{}_{}.trimmed.fastq.gz".format(E, num)) 
+    return(outlist)
 
 #----QC DATA FILE----#
 
@@ -36,12 +55,14 @@ rule all:
         multiQC_trimmed = OUTPUTDIR + '/qc/trimmed_multiqc.html', 
         #TRIM DATA
         trimmedData = expand("{base}/trimmed/{sample}_{num}.trimmed.fastq.gz", base = OUTPUTDIR, sample=run_accession, num = [1,2]), 
-        errtrimmedData = expand("{base}/errtrim/{sample}_{num}.trimmed.errtrim.fastq.gz", base = OUTPUTDIR, sample=run_accession, num = [1,2]),
+        #errtrimmedData = expand("{base}/errtrim/{sample}_{num}.trimmed.errtrim.fastq.gz", base = OUTPUTDIR, sample=run_accession, num = [1,2]),
         # #NORMALIZE DATA
         # normalizedData = expand("{base}/normalized/{sample}_{num}.trimmed.normalized.fastq.gz", base= OUTPUTDIR, sample = run_accession, num=[1,2]),
         #CALCULATE SOURMASH
         signature = expand("{base}/sourmash/{sample}.10k.sig", base = OUTPUTDIR, sample = run_accession),
- 
+        #ASSEMBLE
+        assembly = expand("{base}/megahit/{assembly_group}/final.contigs.fa", base = OUTPUTDIR, assembly_group = ASSEMBLYGROUP) 
+
 rule fastqc:
     input:
         INPUTDIR + "/{sample}/{sample}_{num}.fastq.gz"     
@@ -109,7 +130,7 @@ rule multiqc:
         """ 
 
 rule compute_sigs:
-    input: 
+    input:
         r1 = OUTPUTDIR + "/trimmed/{sample}_1.trimmed.fastq.gz",
         r2 = OUTPUTDIR + "/trimmed/{sample}_2.trimmed.fastq.gz" 
     output: 
@@ -123,4 +144,28 @@ rule compute_sigs:
         zcat {input.r1} {input.r2} | sourmash compute -k 21,31,51\
             --scaled 10000  --track-abundance \
             -o {output} - 2> {log}
+        """
+
+rule megahit_assembly: 
+    input: r1 = lambda wildcards: identify_read_groups("{assembly_group}".format(assembly_group=wildcards.assembly_group)), 
+           r2 = lambda wildcards: identify_read_groups("{assembly_group}".format(assembly_group=wildcards.assembly_group), FORWARD=False) 
+    output: 
+       OUTPUTDIR + "/megahit/{assembly_group}/final.contigs.fa"  
+    conda: 
+        "envs/megahit.yaml"
+    log: 
+        OUTPUTDIR + "/logs/megahit/{assembly_group}.log" 
+    params: 
+        inputr1 = lambda wildcards, input: ','.join(input.r1),
+        inputr2 = lambda wildcards, input: ','.join(input.r2),
+        min_contig_len = MEGAHIT_MIN_CONTIG,
+        cpu_threads = MEGAHIT_CPU, 
+        memory = MEGAHIT_MEM, 
+        other_options = "--continue", 
+        megahit_output_name = lambda wildcards: "{}/megahit/{}".format(OUTPUTDIR, wildcards.assembly_group),
+        megahit_output_prefix = lambda wildcards: "{}".format(wildcards.assembly_group),
+       
+    shell: 
+        """
+        megahit -1 {params.inputr1} -2 {params.inputr2} --min-contig-len {params.min_contig_len} --memory {params.memory} -t {params.cpu_threads} --out-dir {params.megahit_output_name} {params.other_options}  >> {log} 2>&1
         """
