@@ -8,7 +8,7 @@ __default__:
     nodes: 1
     command_options:
         slurm:
-            command: "sbatch --parsable"
+            command: "sbatch --parsable --qos=unlim"
             key_mapping:
             name: "--job-name={}"
             threads: "-n {}"
@@ -17,6 +17,18 @@ __default__:
             queue: "--partition={}"
             time: "--time={}"
             nodes: "-N {}"      # ntasks: 24
+
+fastqc: 
+    queue: compute
+    threads: 1
+    mem: 1
+    time: 720
+
+fastqc_trimmed: 
+    queue: compute
+    threads: 1
+    mem: 1
+    time: 720
 
 trimmomatic:
     queue: compute
@@ -27,11 +39,11 @@ trimmomatic:
 compute_sigs:
     queue: compute
     mem: 4
-    time: 1400
+    time: 2800
 
 megahit_assembly:
     queue: bigmem
     time: 10080 
     mem: 1000
-    threads: 80 
+    threads: 40 
     
