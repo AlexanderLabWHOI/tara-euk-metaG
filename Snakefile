@@ -167,11 +167,5 @@ rule megahit_assembly:
        
     shell: 
         """
-        megahit \
-        -1 {params.inputr1} -2 {params.inputr2} \
-        --min-contig-len {params.min_contig_len} \
-        --memory {params.memory} \ 
-        --num-cpu-threads {params.cpu_threads} \
-        --out-dir {params.megahit_output_name} \
-        {params.other_options} \ >> {log} 2>&1
+        megahit -1 {params.inputr1} -2 {params.inputr2} --min-contig-len {params.min_contig_len} --memory {params.memory} -t {params.cpu_threads} --out-dir {params.megahit_output_name} {params.other_options}  >> {log} 2>&1
         """
