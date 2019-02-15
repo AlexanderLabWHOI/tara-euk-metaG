@@ -32,8 +32,8 @@ fastqc_trimmed:
 
 trimmomatic:
     queue: compute
-    threads: 8
-    mem: 16
+    threads: 6
+    mem: 24
     time: 720
 
 compute_sigs:

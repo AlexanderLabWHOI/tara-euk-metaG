@@ -32,7 +32,7 @@ def identify_read_groups(assembly_group_name, FORWARD=True):
     else: 
         num = 2
     for E in ERR_list: 
-        outlist.append(OUTPUTDIR + "/trimmed/{}_{}.trimmed.fastq.gz".format(E, num)) 
+        outlist.append(SCRATCHDIR + "/trimmed/{}_{}.trimmed.fastq.gz".format(E, num)) 
     return(outlist)
 
 #----QC DATA FILE----#
@@ -54,12 +54,12 @@ rule all:
         multiQC_raw = OUTPUTDIR + '/qc/raw_multiqc.html', 
         multiQC_trimmed = OUTPUTDIR + '/qc/trimmed_multiqc.html', 
         #TRIM DATA
-        trimmedData = expand("{base}/trimmed/{sample}_{num}.trimmed.fastq.gz", base = OUTPUTDIR, sample=run_accession, num = [1,2]), 
+        trimmedData = expand("{base}/trimmed/{sample}_{num}.trimmed.fastq.gz", base = SCRATCHDIR, sample=run_accession, num = [1,2]), 
         #errtrimmedData = expand("{base}/errtrim/{sample}_{num}.trimmed.errtrim.fastq.gz", base = OUTPUTDIR, sample=run_accession, num = [1,2]),
         # #NORMALIZE DATA
         # normalizedData = expand("{base}/normalized/{sample}_{num}.trimmed.normalized.fastq.gz", base= OUTPUTDIR, sample = run_accession, num=[1,2]),
         #CALCULATE SOURMASH
-        signature = expand("{base}/sourmash/{sample}.10k.sig", base = OUTPUTDIR, sample = run_accession),
+        signature = expand("{base}/sourmash/{sample}.10k.sig", base = SCRATCHDIR, sample = run_accession),
         #ASSEMBLE
         assembly = expand("{base}/megahit/{assembly_group}/final.contigs.fa", base = OUTPUTDIR, assembly_group = ASSEMBLYGROUP) 
 
@@ -80,11 +80,11 @@ rule trimmomatic:
         r1 = INPUTDIR + "/{sample}/{sample}_1.fastq.gz", 
         r2 = INPUTDIR + "/{sample}/{sample}_2.fastq.gz" 
     output:
-        r1 = OUTPUTDIR + "/trimmed/{sample}_1.trimmed.fastq.gz",
-        r2 = OUTPUTDIR + "/trimmed/{sample}_2.trimmed.fastq.gz",
+        r1 = SCRATCHDIR + "/trimmed/{sample}_1.trimmed.fastq.gz",
+        r2 = SCRATCHDIR + "/trimmed/{sample}_2.trimmed.fastq.gz",
         # reads where trimming entirely removed the mate
-        r1_unpaired = OUTPUTDIR + "/trimmed/{sample}_1.unpaired.fastq.gz",
-        r2_unpaired = OUTPUTDIR + "/trimmed/{sample}_2.unpaired.fastq.gz"
+        r1_unpaired = SCRATCHDIR + "/trimmed/{sample}_1.unpaired.fastq.gz",
+        r2_unpaired = SCRATCHDIR + "/trimmed/{sample}_2.unpaired.fastq.gz"
     log:
         OUTPUTDIR +  "/logs/trimmomatic/{sample}.log"
     params:
@@ -95,7 +95,7 @@ rule trimmomatic:
  
 rule fastqc_trimmed:
     input:
-        OUTPUTDIR + "/trimmed/{sample}_{num}.trimmed.fastq.gz" 
+        SCRATCHDIR + "/trimmed/{sample}_{num}.trimmed.fastq.gz" 
     output:
         html = OUTPUTDIR + '/qc/fastqc/{sample}_{num}.trimmed_fastqc.html', 
         zip = OUTPUTDIR + '/qc/fastqc/{sample}_{num}.trimmed_fastqc.zip'
@@ -131,10 +131,10 @@ rule multiqc:
 
 rule compute_sigs:
     input:
-        r1 = OUTPUTDIR + "/trimmed/{sample}_1.trimmed.fastq.gz",
-        r2 = OUTPUTDIR + "/trimmed/{sample}_2.trimmed.fastq.gz" 
+        r1 = SCRATCHDIR + "/trimmed/{sample}_1.trimmed.fastq.gz",
+        r2 = SCRATCHDIR + "/trimmed/{sample}_2.trimmed.fastq.gz" 
     output: 
-        OUTPUTDIR + "/sourmash/{sample}.10k.sig"
+        SCRATCHDIR + "/sourmash/{sample}.10k.sig"
     conda: 
         "envs/sourmash.yaml"
     log:
@@ -145,6 +145,7 @@ rule compute_sigs:
             --scaled 10000  --track-abundance \
             -o {output} - 2> {log}
         """
+
 
 rule megahit_assembly: 
     input: r1 = lambda wildcards: identify_read_groups("{assembly_group}".format(assembly_group=wildcards.assembly_group)), 
