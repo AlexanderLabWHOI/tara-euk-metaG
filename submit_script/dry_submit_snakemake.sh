@@ -1,4 +1,4 @@
 snakemake   \
-        --jobs 40 --use-conda --profile tara-metag   \
-                        --cluster "sbatch --parsable  --partition=compute --job-name=TARA.{rule}.{wildcards} --mem=4gb --time=48:00:00 --ntasks=1 --nodes=1" -np
+        --jobs 40 --use-conda --profile tara-metag  \
+        --cluster-config cluster.yaml --cluster "sbatch --parsable --qos=unlim --partition={cluster.queue} --job-name=TARA.{rule}.{wildcards} --mem={cluster.mem}gb --time={cluster.time} --ntasks={cluster.threads} --nodes={cluster.nodes}" -np 
 
