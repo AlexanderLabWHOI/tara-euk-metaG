@@ -40,10 +40,11 @@ compute_sigs:
     queue: compute
     mem: 4
     time: 2800
+    threads: 2
 
 megahit_assembly:
     queue: bigmem
     time: 10080 
-    mem: 1000
+    mem: 1400
     threads: 40 
     
