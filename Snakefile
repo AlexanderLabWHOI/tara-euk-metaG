@@ -1,4 +1,4 @@
-configfile: "config.yaml"  
+configfile: "config-test.yaml"  
 
 import io 
 import os
@@ -61,7 +61,9 @@ rule all:
         #CALCULATE SOURMASH
         signature = expand("{base}/sourmash/{sample}.10k.sig", base = SCRATCHDIR, sample = run_accession),
         #ASSEMBLE
-        assembly = expand("{base}/megahit/{assembly_group}/final.contigs.fa", base = OUTPUTDIR, assembly_group = ASSEMBLYGROUP) 
+        assembly = expand("{base}/megahit/{assembly_group}/final.contigs.fa", base = OUTPUTDIR, assembly_group = ASSEMBLYGROUP),  
+        #BWA INDEX
+        bwa_index = expand("{base}/bwa_index/{assembly_group}.{bwa_tail}", base = OUTPUTDIR, assembly_group = ASSEMBLYGROUP, bwa_tail = ["amb", "ann", "bwt", "pac", "sa"])
 
 rule fastqc:
     input:
@@ -170,3 +172,22 @@ rule megahit_assembly:
         """
         megahit -1 {params.inputr1} -2 {params.inputr2} --min-contig-len {params.min_contig_len} --memory {params.memory} -t {params.cpu_threads} --out-dir {params.megahit_output_name} {params.other_options}  >> {log} 2>&1
         """
+
+rule bwa_index:
+    input:
+       OUTPUTDIR + "/megahit/{assembly_group}/final.contigs.fa" 
+    output:
+       OUTPUTDIR + "/bwa_index/{assembly_group}.amb",
+       OUTPUTDIR + "/bwa_index/{assembly_group}.ann",
+       OUTPUTDIR + "/bwa_index/{assembly_group}.bwt",
+       OUTPUTDIR + "/bwa_index/{assembly_group}.pac",
+       OUTPUTDIR + "/bwa_index/{assembly_group}.sa"
+    log:
+       OUTPUTDIR + "/logs/bwa_index/{assembly_group}.log"
+    params:
+        prefix="{assembly_group}",
+        algorithm="bwtsw"
+    wrapper:
+        "0.31.1/bio/bwa/index"
+
+
