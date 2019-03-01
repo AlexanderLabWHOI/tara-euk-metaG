@@ -47,4 +47,10 @@ megahit_assembly:
     time: 10080 
     mem: 1400
     threads: 40 
-    
+
+bwa_index:
+    queue: compute 
+    time: 24
+    mem: 12
+    threads: 1 
+

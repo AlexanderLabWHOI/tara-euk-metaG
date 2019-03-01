@@ -185,7 +185,7 @@ rule bwa_index:
     log:
        OUTPUTDIR + "/logs/bwa_index/{assembly_group}.log"
     params:
-        prefix="{assembly_group}",
+        prefix= OUTPUTDIR + "/bwa_index/{assembly_group}",
         algorithm="bwtsw"
     wrapper:
         "0.31.1/bio/bwa/index"
