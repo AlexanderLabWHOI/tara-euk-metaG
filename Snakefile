@@ -85,7 +85,9 @@ rule all:
         #BWA MAPPING:
         bwa_mem = get_sample_list(ASSEMBLYGROUP),  
         #METABAT2 
-        jgi_abund = expand("{base}/metabat2/{assembly_group}/jgi_abund.txt", base = OUTPUTDIR, assembly_group = ASSEMBLYGROUP)
+        jgi_abund = expand("{base}/metabat2/{assembly_group}/jgi_abund.txt", base = OUTPUTDIR, assembly_group = ASSEMBLYGROUP),
+        metabat2_bins = expand("{base}/metabat2/{assembly_group}/{assembly_group}_bin", base = OUTPUTDIR, assembly_group = ASSEMBLYGROUP)
+
 rule fastqc:
     input:
         INPUTDIR + "/{sample}/{sample}_{num}.fastq.gz"     
@@ -260,7 +262,7 @@ rule metabat_abundance:
         OUTPUTDIR + "/logs/metabat2/{assembly_group}.abun.log"
     shell:
         """
-        jgi_summarize_bam_contig_depths --outputDepth {output} {input}
+        jgi_summarize_bam_contig_depths --outputDepth {output} {input} > {log} 2>&1
         """
 
 rule metabat_binning:
@@ -268,11 +270,15 @@ rule metabat_binning:
         assembly = OUTPUTDIR + "/megahit/{assembly_group}/final.contigs.fa",
         depth = OUTPUTDIR + "/metabat2/{assembly_group}/jgi_abund.txt"
     output:
-        directory("")
+        OUTPUTDIR + "/metabat2/{assembly_group}/{assembly_group}_bin"
     conda:
+         "envs/metabat-env.yaml"
     params: 
-        other = ""
+        other = "--saveCls",
+        threads = 8
+    log:
+        OUTPUTDIR + "/logs/metabat2/{assembly_group}.bin.log"
     shell:
         """
-        metabat2 {params.other} -i {input.assembly} -a {input.depth} -o {output}
+        metabat2 {params.other} --numThreads {params.threads} -i {input.assembly} -a {input.depth} -o {output} > {log} 2>&1
         """
