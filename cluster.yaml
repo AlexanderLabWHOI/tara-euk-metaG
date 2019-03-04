@@ -50,7 +50,12 @@ megahit_assembly:
 
 bwa_index:
     queue: compute 
-    time: 24
+    time: 240
     mem: 12
-    threads: 1 
+    threads: 4 
 
+bwa_mem: 
+    queue: compute
+    time: 720
+    mem: 16
+    threads: 8
