@@ -25,7 +25,7 @@ MEGAHIT_MEM = config["megahit_mem"]
 #----FUNCTIONS----#
 
 def identify_read_groups(assembly_group_name, FORWARD=True):
-    outlist=[]
+    outlist=[] 
     ERR_list = SAMPLELIST.loc[assembly_group_name, 'ERR_list'].split(', ')
     if FORWARD: 
         num = 1
@@ -34,6 +34,23 @@ def identify_read_groups(assembly_group_name, FORWARD=True):
     for E in ERR_list: 
         outlist.append(SCRATCHDIR + "/trimmed/{}_{}.trimmed.fastq.gz".format(E, num)) 
     return(outlist)
+
+def get_sample_list(assembly_group):
+    outlist = []
+    for assembly_group_name in assembly_group: 
+        ERR_list = SAMPLELIST.loc[assembly_group_name, 'ERR_list'].split(', ')
+        for E in ERR_list:
+            out = SCRATCHDIR + "/mapping/{}/{}.bam".format(assembly_group_name, E) 
+            outlist.append(out)
+    return(outlist)
+
+def get_sample_list_onegroup(assembly_group_name):
+    outlist = []
+    ERR_list = SAMPLELIST.loc[assembly_group_name, 'ERR_list'].split(', ')
+    for E in ERR_list:
+        out = SCRATCHDIR + "/mapping/{}/{}.bam".format(assembly_group_name, E)
+        outlist.append(out)
+    return(outlist)        
 
 #----QC DATA FILE----#
 
@@ -44,7 +61,7 @@ pathlib.Path(OUTPUTDIR).mkdir(parents=True, exist_ok=True)
 
 #----DEFINE RULES----#
 
-localrules: multiqc 
+localrules: multiqc, copy_bwa_index 
 
 rule all: 
     input:
@@ -61,7 +78,15 @@ rule all:
         #CALCULATE SOURMASH
         signature = expand("{base}/sourmash/{sample}.10k.sig", base = SCRATCHDIR, sample = run_accession),
         #ASSEMBLE
-        assembly = expand("{base}/megahit/{assembly_group}/final.contigs.fa", base = OUTPUTDIR, assembly_group = ASSEMBLYGROUP) 
+        assembly = expand("{base}/megahit/{assembly_group}/final.contigs.fa", base = OUTPUTDIR, assembly_group = ASSEMBLYGROUP),  
+        assembly_copy = expand("{base}/bwa_index/{assembly_group}.fa", base = SCRATCHDIR, assembly_group = ASSEMBLYGROUP),  
+        #BWA INDEX
+        bwa_index = expand("{base}/bwa_index/{assembly_group}.fa.{bwa_tail}", base = SCRATCHDIR, assembly_group = ASSEMBLYGROUP, bwa_tail = ["amb", "ann", "bwt", "pac", "sa"]), 
+        #BWA MAPPING:
+        bwa_mem = get_sample_list(ASSEMBLYGROUP),  
+        #METABAT2 
+        jgi_abund = expand("{base}/metabat2/{assembly_group}/jgi_abund.txt", base = OUTPUTDIR, assembly_group = ASSEMBLYGROUP),
+        metabat2_bins = expand("{base}/metabat2/{assembly_group}/{assembly_group}_bin", base = OUTPUTDIR, assembly_group = ASSEMBLYGROUP)
 
 rule fastqc:
     input:
@@ -165,8 +190,95 @@ rule megahit_assembly:
         other_options = "--continue", 
         megahit_output_name = lambda wildcards: "{}/megahit/{}".format(OUTPUTDIR, wildcards.assembly_group),
         megahit_output_prefix = lambda wildcards: "{}".format(wildcards.assembly_group),
-       
     shell: 
         """
         megahit -1 {params.inputr1} -2 {params.inputr2} --min-contig-len {params.min_contig_len} --memory {params.memory} -t {params.cpu_threads} --out-dir {params.megahit_output_name} {params.other_options}  >> {log} 2>&1
+        """
+
+rule bwa_index:
+    input:
+        SCRATCHDIR + "/bwa_index/{assembly_group}.fa"
+    output:
+        SCRATCHDIR + "/bwa_index/{assembly_group}.fa.amb",
+        SCRATCHDIR + "/bwa_index/{assembly_group}.fa.ann",
+        SCRATCHDIR + "/bwa_index/{assembly_group}.fa.bwt",
+        SCRATCHDIR + "/bwa_index/{assembly_group}.fa.pac",
+        SCRATCHDIR + "/bwa_index/{assembly_group}.fa.sa"
+    log:
+        OUTPUTDIR + "/logs/bwa_index/{assembly_group}.log"
+    params:
+        algorithm="bwtsw"
+    conda:
+        "envs/metabat-env.yaml"
+ 
+    shell:
+        """
+        bwa index {input} 2> {log}
+        """
+
+rule copy_bwa_index:
+    input: 
+        OUTPUTDIR + "/megahit/{assembly_group}/final.contigs.fa"
+    output:
+        SCRATCHDIR + "/bwa_index/{assembly_group}.fa"
+    shell:
+        """
+        cp {input} {output}
+        """
+
+rule bwa_mem:
+    input:
+        amb = SCRATCHDIR + "/bwa_index/{assembly_group}.fa.amb", 
+        ann = SCRATCHDIR + "/bwa_index/{assembly_group}.fa.ann", 
+        bwt = SCRATCHDIR + "/bwa_index/{assembly_group}.fa.bwt", 
+        pac = SCRATCHDIR + "/bwa_index/{assembly_group}.fa.pac",  
+        sa = SCRATCHDIR + "/bwa_index/{assembly_group}.fa.sa", 
+        reference = SCRATCHDIR + "/bwa_index/{assembly_group}.fa", 
+        r1 = SCRATCHDIR + "/trimmed/{sample}_1.trimmed.fastq.gz",
+        r2 = SCRATCHDIR + "/trimmed/{sample}_2.trimmed.fastq.gz", 
+    output:
+        SCRATCHDIR + "/mapping/{assembly_group}/{sample}.bam"
+    log:
+        OUTPUTDIR + "/logs/bwa_mem/{assembly_group}/{sample}.log"
+    params: 
+        extra="", 
+        #pipe_cmd = "samtools sort -o {output} -",  
+        threads = 8
+    conda: 
+        "envs/metabat-env.yaml"
+    shell:
+        """ 
+        bwa mem -t {params.threads} {params.extra} {input.reference} {input.r1} {input.r2} | samtools sort -o {output} - >> {log} 2>&1
+        """ 
+       
+rule metabat_abundance:
+    input:
+        lambda wildcards: get_sample_list_onegroup("{assembly_group}".format(assembly_group=wildcards.assembly_group))
+    output:
+        OUTPUTDIR + "/metabat2/{assembly_group}/jgi_abund.txt"
+    conda:
+         "envs/metabat-env.yaml"
+    log:
+        OUTPUTDIR + "/logs/metabat2/{assembly_group}.abun.log"
+    shell:
+        """
+        jgi_summarize_bam_contig_depths --outputDepth {output} {input} > {log} 2>&1
+        """
+
+rule metabat_binning:
+    input:
+        assembly = OUTPUTDIR + "/megahit/{assembly_group}/final.contigs.fa",
+        depth = OUTPUTDIR + "/metabat2/{assembly_group}/jgi_abund.txt"
+    output:
+        OUTPUTDIR + "/metabat2/{assembly_group}/{assembly_group}_bin"
+    conda:
+         "envs/metabat-env.yaml"
+    params: 
+        other = "--saveCls",
+        threads = 8
+    log:
+        OUTPUTDIR + "/logs/metabat2/{assembly_group}.bin.log"
+    shell:
+        """
+        metabat2 {params.other} --numThreads {params.threads} -i {input.assembly} -a {input.depth} -o {output} > {log} 2>&1
         """
