@@ -1,4 +1,4 @@
-configfile: "config.yaml"  
+configfile: "config-test.yaml"  
 
 import io 
 import os
@@ -86,8 +86,10 @@ rule all:
         bwa_mem = get_sample_list(ASSEMBLYGROUP),  
         #METABAT2 
         jgi_abund = expand("{base}/metabat2/{assembly_group}/jgi_abund.txt", base = OUTPUTDIR, assembly_group = ASSEMBLYGROUP),
-        metabat2_bins = expand("{base}/metabat2/{assembly_group}/{assembly_group}_bin", base = OUTPUTDIR, assembly_group = ASSEMBLYGROUP)
-
+        metabat2_bins = expand("{base}/metabat2/{assembly_group}/{assembly_group}_bin", base = OUTPUTDIR, assembly_group = ASSEMBLYGROUP),
+        #EUKREP
+        eukrep =  expand("{base}/eukrep/{assembly_group}/euk.final.contigs.fa", base = OUTPUTDIR, assembly_group = ASSEMBLYGROUP), 
+        metabat2_bins_euk = expand("{base}/metabat2_euk/{assembly_group}/{assembly_group}_eukbin", base = OUTPUTDIR, assembly_group = ASSEMBLYGROUP),
 rule fastqc:
     input:
         INPUTDIR + "/{sample}/{sample}_{num}.fastq.gz"     
@@ -282,3 +284,39 @@ rule metabat_binning:
         """
         metabat2 {params.other} --numThreads {params.threads} -i {input.assembly} -a {input.depth} -o {output} > {log} 2>&1
         """
+
+rule eukrep:
+    input: 
+        assembly = OUTPUTDIR + "/megahit/{assembly_group}/final.contigs.fa",
+    output:
+        OUTPUTDIR + "/eukrep/{assembly_group}/euk.final.contigs.fa"
+    conda: 
+        "envs/EukRep.yaml"
+    log:
+        OUTPUTDIR + "logs/eukrep/{assembly_group}.eukrep.log"
+    params: 
+        prok = OUTPUTDIR + "/eukrep/{assembly_group}/prok.final.contigs.fa",
+        min_contig = 1000
+    shell: 
+        """
+        EukRep -i {input} -o {output} --prokarya {params.prok} --min {params.min_contig} > {log} 2>&1
+        """
+
+rule metabat_binning_euk:
+    input:
+        assembly = OUTPUTDIR + "/eukrep/{assembly_group}/euk.final.contigs.fa",
+        depth = OUTPUTDIR + "/metabat2/{assembly_group}/jgi_abund.txt"
+    output:
+        OUTPUTDIR + "/metabat2_euk/{assembly_group}/{assembly_group}_eukbin"
+    conda:
+         "envs/metabat-env.yaml"
+    params:
+        other = "--saveCls",
+        threads = 8
+    log:
+        OUTPUTDIR + "/logs/metabat2/{assembly_group}.eukbin.log"
+    shell:
+        """
+        metabat2 {params.other} --numThreads {params.threads} -i {input.assembly} -a {input.depth} -o {output} > {log} 2>&1
+        """
+
