@@ -73,12 +73,14 @@ rule all:
         multiQC_raw = OUTPUTDIR + '/qc/raw_multiqc.html', 
         multiQC_trimmed = OUTPUTDIR + '/qc/trimmed_multiqc.html', 
         #TRIM DATA
-        trimmedData = expand("{base}/trimmed/{sample}_{num}.trimmed.fastq.gz", base = SCRATCHDIR, sample=run_accession, num = [1,2]), 
+        trimmedData = expand("{base}/trimmed/{sample}_{num}.trimmed.fastq.gz", base = SCRATCHDIR, sample=run_accession, num = [1,2]),
+        trimmedData_metaT = expand("{base}/trimmed_metaT/{sample}_{num}.trimmed.fastq.gz", base = SCRATCHDIR, sample=run_accession, num = [1,2]),
         #errtrimmedData = expand("{base}/errtrim/{sample}_{num}.trimmed.errtrim.fastq.gz", base = OUTPUTDIR, sample=run_accession, num = [1,2]),
         # #NORMALIZE DATA
         # normalizedData = expand("{base}/normalized/{sample}_{num}.trimmed.normalized.fastq.gz", base= OUTPUTDIR, sample = run_accession, num=[1,2]),
         #CALCULATE SOURMASH
         signature = expand("{base}/sourmash/{sample}.10k.sig", base = SCRATCHDIR, sample = run_accession),
+        signature_metaT = expand("{base}/sourmash_metaT/{sample}.10k.sig", base = SCRATCHDIR, sample = run_accession),
         #ASSEMBLE
         assembly = expand("{base}/megahit/{assembly_group}/final.contigs.fa", base = OUTPUTDIR, assembly_group = ASSEMBLYGROUP),  
         assembly_copy = expand("{base}/bwa_index/{assembly_group}.fa", base = SCRATCHDIR, assembly_group = ASSEMBLYGROUP),  
@@ -92,6 +94,9 @@ rule all:
         #EUKREP
         eukrep =  expand("{base}/eukrep/{assembly_group}/euk.final.contigs.fa", base = OUTPUTDIR, assembly_group = ASSEMBLYGROUP), 
         metabat2_bins_euk = expand("{base}/metabat2_euk/{assembly_group}/{assembly_group}_eukbin", base = OUTPUTDIR, assembly_group = ASSEMBLYGROUP),
+        
+
+
 rule fastqc:
     input:
         INPUTDIR + "/{sample}/{sample}_{num}.fastq.gz"     
