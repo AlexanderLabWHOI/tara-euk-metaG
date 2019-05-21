@@ -1,4 +1,4 @@
-configfile: "config-test.yaml"  
+configfile: "config.yaml"  
 
 import io 
 import os
@@ -20,7 +20,7 @@ ASSEMBLYGROUP = list(SAMPLELIST.index)
 MEGAHIT_CPU = config["megahit_cpu"]
 MEGAHIT_MIN_CONTIG = config["megahit_min_contig"]
 MEGAHIT_MEM = config["megahit_mem"]
-
+MEGAHIT_OTHER = config["megahit_other"]
 
 #----FUNCTIONS----#
 
@@ -189,7 +189,7 @@ rule megahit_assembly:
         min_contig_len = MEGAHIT_MIN_CONTIG,
         cpu_threads = MEGAHIT_CPU, 
         memory = MEGAHIT_MEM, 
-        other_options = "--continue", 
+        other_options = MEGAHIT_OTHER,
         megahit_output_name = lambda wildcards: "{}/megahit/{}".format(OUTPUTDIR, wildcards.assembly_group),
         megahit_output_prefix = lambda wildcards: "{}".format(wildcards.assembly_group),
     shell: 
@@ -293,7 +293,7 @@ rule eukrep:
     conda: 
         "envs/EukRep.yaml"
     log:
-        OUTPUTDIR + "logs/eukrep/{assembly_group}.eukrep.log"
+        OUTPUTDIR + "/logs/eukrep/{assembly_group}.eukrep.log"
     params: 
         prok = OUTPUTDIR + "/eukrep/{assembly_group}/prok.final.contigs.fa",
         min_contig = 1000
