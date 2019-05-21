@@ -10,13 +10,15 @@ from snakemake.exceptions import print_exception, WorkflowError
 
 SAMPLES = pd.read_table(config["input_ena_table"])
 INPUTDIR = config["inputDIR"]
+INPUTDIR_METAT = config["inputDIR_metaT"]
 run_accession = list(SAMPLES.run_accession)
 ADAPTERS = config["adapters"]
-STUDY = list(set(SAMPLES['study_accession'].tolist()))
+STUDY = list(set(SAMPLES["study_accession"].tolist()))
 SCRATCHDIR = config["scratch"]
 OUTPUTDIR = config["outputDIR"]
-SAMPLELIST = pd.read_table(config["sample_list"], index_col='Assembly_group')
+SAMPLELIST = pd.read_table(config["sample_list"], index_col="Assembly_group")
 ASSEMBLYGROUP = list(SAMPLELIST.index)
+SAMPLELIST_METAT = pd.read_table(config["sample_list_metaT"], index_col="Assembly_group")
 MEGAHIT_CPU = config["megahit_cpu"]
 MEGAHIT_MIN_CONTIG = config["megahit_min_contig"]
 MEGAHIT_MEM = config["megahit_mem"]
@@ -119,7 +121,24 @@ rule trimmomatic:
         extra=""
     wrapper:
         "0.27.1/bio/trimmomatic/pe"
- 
+rule trimmomatic_metaT:
+    input:
+        r1 = INPUTDIR_METAT + "/{sample}/{sample}_1.fastq.gz",
+        r2 = INPUTDIR_METAT + "/{sample}/{sample}_2.fastq.gz"
+    output:
+        r1 = SCRATCHDIR + "/trimmed_metaT/{sample}_1.trimmed.fastq.gz",
+        r2 = SCRATCHDIR + "/trimmed_metaT/{sample}_2.trimmed.fastq.gz",
+        # reads where trimming entirely removed the mate
+        r1_unpaired = SCRATCHDIR + "/trimmed_metaT/{sample}_1.unpaired.fastq.gz",
+        r2_unpaired = SCRATCHDIR + "/trimmed_metaT/{sample}_2.unpaired.fastq.gz"
+    log:
+        OUTPUTDIR +  "/logs/trimmomatic/{sample}.log"
+    params:
+        trimmer=["ILLUMINACLIP:{}:2:30:7".format(ADAPTERS), "LEADING:2", "TRAILING:2", "SLIDINGWINDOW:4:2", "MINLEN:50"],
+        extra=""
+    wrapper:
+        "0.27.1/bio/trimmomatic/pe"
+
 rule fastqc_trimmed:
     input:
         SCRATCHDIR + "/trimmed/{sample}_{num}.trimmed.fastq.gz" 
