@@ -175,6 +175,9 @@ rule multiqc:
         rm -rf multiqc_data
         """ 
 
+
+
+
 rule compute_sigs:
     input:
         r1 = SCRATCHDIR + "/trimmed/{sample}_1.trimmed.fastq.gz",
@@ -192,6 +195,36 @@ rule compute_sigs:
             -o {output} - 2> {log}
         """
 
+
+rule compute_sigs_metaT:
+    input:
+        r1 = SCRATCHDIR + "/trimmed_metaT/{sample}_1.trimmed.fastq.gz",
+        r2 = SCRATCHDIR + "/trimmed_metaT/{sample}_2.trimmed.fastq.gz" 
+    output: 
+        SCRATCHDIR + "/sourmash_metaT/{sample}.10k.sig"
+    conda: 
+        "envs/sourmash.yaml"
+    log:
+         OUTPUTDIR +  "/logs/sourmash/sourmash_{sample}.log"
+    shell: 
+        """
+        zcat {input.r1} {input.r2} | sourmash compute -k 21,31,51\
+            --scaled 10000  --track-abundance \
+            -o {output} - 2> {log}
+        """
+
+
+rule megahit_assembly: 
+    input: r1 = lambda wildcards: identify_read_groups("{assembly_group}".format(assembly_group=wildcards.assembly_group)), 
+           r2 = lambda wildcards: identify_read_groups("{assembly_group}".format(assembly_group=wildcards.assembly_group), FORWARD=False) 
+    output: 
+       OUTPUTDIR + "/megahit/{assembly_group}/final.contigs.fa"  
+    conda: 
+        "envs/megahit.yaml"
+    log: 
+        OUTPUTDIR + "/logs/megahit/{assembly_group}.log" 
+    params: 
+        inputr1 = lambda wildcards, input: ','.join(input.r1),
 
 rule megahit_assembly: 
     input: r1 = lambda wildcards: identify_read_groups("{assembly_group}".format(assembly_group=wildcards.assembly_group)), 
