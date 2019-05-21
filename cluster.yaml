@@ -45,8 +45,8 @@ compute_sigs:
 megahit_assembly:
     queue: bigmem
     time: 10080 
-    mem: 1400
-    threads: 40 
+    mem: 3000
+    threads: 80 
 
 bwa_index:
     queue: compute 
