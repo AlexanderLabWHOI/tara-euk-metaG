@@ -69,7 +69,9 @@ rule all:
     input:
         # QC DATA
         fastqcZIP_raw = expand("{base}/qc/fastqc/{sample}_{num}_fastqc.zip", base = OUTPUTDIR, sample=run_accession, num = [1,2]), 
+        fastqcZIP_raw_metaT = expand("{base}/qc/fastqc_metaT/{sample}_{num}_fastqc.zip", base = OUTPUTDIR, sample=run_accession, num = [1,2]), 
         fastqcZIP_trimmed = expand("{base}/qc/fastqc/{sample}_{num}.trimmed_fastqc.zip", base = OUTPUTDIR, sample=run_accession, num = [1,2]), 
+        fastqcZIP_trimmed_metaT = expand("{base}/qc/fastqc_metaT/{sample}_{num}.trimmed_fastqc.zip", base = OUTPUTDIR, sample=run_accession, num = [1,2]), 
         multiQC_raw = OUTPUTDIR + '/qc/raw_multiqc.html', 
         multiQC_trimmed = OUTPUTDIR + '/qc/trimmed_multiqc.html', 
         #TRIM DATA
@@ -105,6 +107,18 @@ rule fastqc:
         zip = OUTPUTDIR + '/qc/fastqc/{sample}_{num}_fastqc.zip'
     params: ""
     log: 
+        OUTPUTDIR + '/logs/fastqc/{sample}_{num}.log'
+    wrapper:
+        "0.27.1/bio/fastqc"
+
+rule fastqc_metaT:
+    input:
+        INPUTDIR_METAT + "/{sample}/{sample}_{num}.fastq.gz"
+    output:
+        html = OUTPUTDIR + '/qc/fastqc_metaT/{sample}_{num}_fastqc.html',
+        zip = OUTPUTDIR + '/qc/fastqc_metaT/{sample}_{num}_fastqc.zip'
+    params: ""
+    log:
         OUTPUTDIR + '/logs/fastqc/{sample}_{num}.log'
     wrapper:
         "0.27.1/bio/fastqc"
@@ -156,6 +170,18 @@ rule fastqc_trimmed:
     wrapper:
         "0.27.1/bio/fastqc"
 
+rule fastqc_trimmed_metaT:
+    input:
+        SCRATCHDIR + "/trimmed_metaT/{sample}_{num}.trimmed.fastq.gz"
+    output:
+        html = OUTPUTDIR + '/qc/fastqc_metaT/{sample}_{num}.trimmed_fastqc.html',
+        zip = OUTPUTDIR + '/qc/fastqc_metaT/{sample}_{num}.trimmed_fastqc.zip'
+    params: ""
+    log:
+        OUTPUTDIR + '/logs/fastqc/{sample}_{num}.trimmed.log'
+    wrapper:
+        "0.27.1/bio/fastqc"
+
 rule multiqc:
     input:
         raw = expand("{base}/qc/fastqc/{sample}_{num}_fastqc.zip", base = OUTPUTDIR, sample = run_accession, num = [1,2]), 
@@ -179,9 +205,6 @@ rule multiqc:
         mv multiqc_data/multiqc_general_stats.txt {output.stats_trimmed} 
         rm -rf multiqc_data
         """ 
-
-
-
 
 rule compute_sigs:
     input:
