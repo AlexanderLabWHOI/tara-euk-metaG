@@ -60,7 +60,6 @@ bwa_mem:
     mem: 16
     threads: 8
 
-
 metabat_abundance: 
     queue: compute
     time: 720
@@ -85,3 +84,8 @@ eukrep:
     mem: 8
     threads: 2
 
+prodigal:
+    queue: compute
+    time: 2400
+    mem: 16 
+    threads: 1
