@@ -378,10 +378,10 @@ rule prodigal:
         assembly = OUTPUTDIR + "/megahit/{assembly_group}/final.contigs.fa",
     output: 
         proteins = OUTPUTDIR + "/prodigal/{assembly_group}/proteins.faa",
-        genes = OUTPUTDIR + "/prodigal/{assembly_group}/genes"
+        genes = OUTPUTDIR + "/prodigal/{assembly_group}/genes.gff"
     conda:
         "envs/prodigal.yaml"
     shell:
         """
-        prodigal -i {input.assembly} -o {output.genes} -a {output.proteins} -p meta
+        prodigal -i {input.assembly} -f gff -o {output.genes} -a {output.proteins} -p meta
         """
