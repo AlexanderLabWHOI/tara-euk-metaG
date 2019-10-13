@@ -9,12 +9,19 @@ Create a conda environment to run pipeline
 ```
 conda env create --name snakemake-tara-euk --file environmentv0.2.yaml
 ```
+* conda v4.7.10
+* snakemake v5.6.0
+
 
 ### Working directory
 Provided tables & scripts include:
 * ```tara-euk-metaG/input/ENA_tables```- ENA tables which are merged sample lists of the ENA download information and the Tara Ocean metadata from Pangea. [See Tara Ocean data download repo here](https://github.com/AlexanderLabWHOI/tara-download-snakemake).
 * ```tara-euk-metaG/input```- List of samples to be combined for the assemblies. In the case of the Tara Oceans data this is by ocean region, province, and size fraction.
-
+* ```tara-euk-metaG/input/Curate-Input-Data-TARA.ipynb```- jupyter notebook detailing how ENA_tables with sample information were curated (e.g., revised size fractionation annotation) and compiled into _Assembly groups_.
+* There are also test scripts and files which include the code to generate the test files and the output test sample names. This is a subset of the data which can be run as a test batch. 
+* ```tara-euk-metaG/input/adapters``` - illumina adapters that are used during the trimmomatic (adapter trimming) step.
+* ```cluster.yaml``` and ```submit_script/``` are configuration file and shell commands to run snakemake pipeline with Slurm.
+* ```envs/``` list of conda environments snakemake uses throughout the pipeline
 
 
 ***
