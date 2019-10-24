@@ -45,7 +45,7 @@ compute_sigs:
 megahit_assembly:
     queue: compute
     time: 4320
-    mem: 32
+    mem: 48
     threads: 16 
 
 bwa_index:
