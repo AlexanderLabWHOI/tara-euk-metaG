@@ -7,7 +7,7 @@ Molecular and genomic approaches, particularly those applied to whole, mixed com
 
 Create a conda environment to run pipeline
 ```
-conda env create --name snakemake-tara-euk --file environmentv0.2.yaml
+conda env create --name EukHeist --file environmentv0.2.yaml
 ```
 * conda v4.7.10
 * snakemake v5.6.0
@@ -24,6 +24,18 @@ Provided tables & scripts include:
 * ```envs/``` list of conda environments snakemake uses throughout the pipeline
 
 
+### Download TARA data
+
+See [repo to download raw Tara Ocean data here](https://github.com/AlexanderLabWHOI/tara-download-snakemake).
+
+## Alternatively, set up test dataset to run EukHeist pipeline.
+
+Test files were created using *Curate-Test-input-data-TARA.ipynb*, but subsetting 20 metagenomic and 10 metatranscriptomic samples. 
+* ```tara-euk-metaG/input/SampleList_ForAssembly_meta*_python-TEST.txt```
+* ```tara-euk-metaG/input/ENA_tables/PRJEB*_meta*_wenv_PE-TEST.txt```
+
+### Output files and descriptions
+
 ***
 ### Troubleshooting snakemake
 When throwing an error, snakemake will list log files. Each time snakemake is executed, a log file is created in ```CURRENT_SNAKEMAKE_DIR/.snakemake/log/```. These are dated and provide the printed output. Some common errors and steps to diagnose.   
@@ -39,7 +51,15 @@ To look for additional code error that may result in Syntax errors, try adding t
 * ```--printshellcmds```
 * ```--debug```
 
+
+### to do
+* include shell script to download only the test data?
+* determine if updated snakemake version would be better
+* figure out what is going on with multiqc
+* list output files
+
 ### Notes to generalize Tara-specific pipeline
 
 * See 2 remove directories where older files are placed - check this and remove. ```tara-euk-metaG/input/ENA_tables/rm-dir```
+* separate directories for metaT and metaG - rather than PRNJ IDs
 * environments? versioning eukheist?

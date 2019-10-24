@@ -43,10 +43,10 @@ compute_sigs:
     threads: 2
 
 megahit_assembly:
-    queue: bigmem
-    time: 10080 
-    mem: 3000
-    threads: 80 
+    queue: compute
+    time: 4320
+    mem: 32
+    threads: 16 
 
 bwa_index:
     queue: compute 
