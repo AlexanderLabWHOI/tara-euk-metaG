@@ -36,6 +36,31 @@ Test files were created using *Curate-Test-input-data-TARA.ipynb*, but subsettin
 
 ### Output files and descriptions
 
+* Eukrep - sorted megahit contigs, provided contigs which are putative eukaryotic, directory made for each assembly group, within each one there is a euk.final.contigs and one for proks
+* Megahit - directory made for each assembly group, in each dir final.contigs.fa
+* Metabat2 - product of binning the contigs - bins for contigs - bins are saved as fast files ending in .fa and the other file ending in bin is the metabat abundance
+* metat2_euk - same, but based on the euk contigs
+* Prodigal - gene and protein abundance based on the metaT contigs
+   
+_To scratch_
+
+* bwa_index - for each assembly built bwa index of the metagenomic reads - this is what bwa mem will use to map metaT/G reads against metaG reads
+* Mapping - bam files from mapping metaG and metaT reads to index - directory for each assembly
+* Sourmash - all sourmash profiles 
+* Trimmed - trimmed reads 
+
+### MAGpy with BUSCO
+
+Git clone [this repo](https://github.com/AlexanderLabWHOI/MAGpy) forked from [here](https://github.com/WatsonLab/MAGpy) into your output directory specified in the above config.yaml file.
+Follow these installation instructions:   
+1.
+2. 
+
+#### Run MAGpy on EukHeist generated bins
+
+
+
+
 ***
 ### Troubleshooting snakemake
 When throwing an error, snakemake will list log files. Each time snakemake is executed, a log file is created in ```CURRENT_SNAKEMAKE_DIR/.snakemake/log/```. These are dated and provide the printed output. Some common errors and steps to diagnose.   
