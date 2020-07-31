@@ -4,7 +4,7 @@ __default__:
     time: 120 # minutes
     mem: 10 # GB
     threads: 8
-    queue: compute # required
+    queue: scavenger # required
     nodes: 1
     command_options:
         slurm:
@@ -57,7 +57,7 @@ bwa_index:
 bwa_mem: 
     queue: compute
     time: 1440
-    mem: 16
+    mem: 72
     threads: 8
 
 metabat_abundance: 
@@ -68,19 +68,24 @@ metabat_abundance:
 
 metabat_binning: 
     queue: compute
-    time: 720
+    time: 2400
     mem: 32
     threads: 16
-
+concoct_binning:
+    queue: scavenger
+    time: 2400
+    mem: 32
+    threads: 16
+                                    
 metabat_binning_euk: 
     queue: compute
-    time: 720
+    time: 2400 
     mem: 32
     threads: 16
 
 eukrep:
     queue: compute
-    time: 600
+    time: 1200 
     mem: 8
     threads: 2
 
@@ -89,3 +94,27 @@ prodigal:
     time: 2400
     mem: 16 
     threads: 1
+
+kmer_trim_reads:
+    queue: compute
+    time: 2880
+    mem: 32
+    threads: 4
+
+build_mag_index:
+    queue: compute 
+    time: 1440
+    mem: 64
+    threads: 8 
+
+mag_bwa_mem: 
+    queue: scavenger 
+    time: 2400
+    mem: 72
+    threads: 16
+
+coverm_genome:
+    queue: scavenger
+    time: 1440
+    mem: 32
+    threads: 8
