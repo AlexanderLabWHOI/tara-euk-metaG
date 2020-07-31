@@ -1,0 +1,11 @@
+name: eukcc 
+channels:
+    - bioconda
+    - conda-forge 
+dependencies:
+    - eukcc
+    - bedops
+    - pip
+    - pip:
+        - EukRep
+
